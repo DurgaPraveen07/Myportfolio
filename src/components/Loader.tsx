@@ -148,7 +148,7 @@ export default function Loader() {
           key="loader"
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.8, ease: [0.76, 0, 0.24, 1] }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
           style={{
             position: "fixed", inset: 0, zIndex: 9999,
             background: "#05050A", // Deep navy/black
@@ -183,7 +183,7 @@ export default function Loader() {
           <motion.div
             initial={{ opacity: 0, y: -24, filter: "blur(10px)" }}
             animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-            transition={{ duration: 1, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 1, delay: 0.1, ease: "easeOut" }}
             style={{ textAlign: "center", userSelect: "none", marginBottom: 48, zIndex: 10 }}
           >
             <h1 style={{

@@ -206,7 +206,7 @@ export default function Projects() {
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 1, ease: "easeOut" }}
         >
           <span style={{
             fontSize: 14, fontFamily: "'JetBrains Mono', monospace", color: "#6C63FF",

@@ -46,7 +46,7 @@ export default function Navbar() {
     <motion.header
       initial={{ y: -100 }}
       animate={{ y: 0 }}
-      transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: 0.8, ease: "easeOut" }}
       className={`fixed top-0 left-0 right-0 z-50 flex justify-center transition-all duration-700 ${
         scrolled ? "py-4 bg-[#0A0A0F]/80 backdrop-blur-xl border-b border-white/[0.05]" : "py-6 bg-transparent"
       }`}

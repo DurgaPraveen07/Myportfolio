@@ -56,7 +56,7 @@ export default function Skills() {
                 initial={{ opacity: 0, y: 25, filter: "blur(8px)" }}
                 whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                 viewport={{ once: true, margin: "-40px" }}
-                transition={{ duration: 0.9, delay: i * 0.06, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ duration: 0.9, delay: i * 0.06, ease: "easeOut" }}
                 whileHover={{ y: -8, scale: 1.08 }}
                 className="group flex flex-col items-center justify-center gap-4 cursor-default"
               >

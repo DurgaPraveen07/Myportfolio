@@ -4,6 +4,7 @@ import CustomCursor from "@/components/CustomCursor";
 import SmoothScroll from "@/components/SmoothScroll";
 import Loader from "@/components/Loader";
 import CursorGlow from "@/components/CursorGlow";
+import Navbar from "@/components/Navbar";
 
 export const metadata: Metadata = {
   title: "Durga Praveen | Full Stack Developer & IoT Enthusiast",
@@ -40,6 +41,7 @@ export default function RootLayout({
         <Loader />
         <CustomCursor />
         <CursorGlow />
+        <Navbar />
         <SmoothScroll>
           {children}
         </SmoothScroll>

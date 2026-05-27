@@ -75,7 +75,7 @@ export default function About() {
             initial={{ opacity: 0, x: -40, filter: "blur(20px)" }}
             whileInView={{ opacity: 1, x: 0, filter: "blur(0px)" }}
             viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 1.5, ease: "easeOut" }}
             className="relative group flex justify-center"
           >
             {/* Glowing border */}
