@@ -170,11 +170,11 @@ export default function Loader() {
             {[...Array(6)].map((_, i) => (
               <div key={i} style={{
                 position: "absolute",
-                top: `${30 + Math.random() * 40}%`,
+                top: `${30 + (i * 7.3)}%`,
                 left: 0, width: "15vw", height: 1,
                 background: "linear-gradient(90deg, transparent, rgba(0,255,255,0.8), transparent)",
-                animation: `speed-line ${0.5 + Math.random()}s linear infinite`,
-                animationDelay: `${Math.random()}s`,
+                animation: `speed-line ${0.6 + (i % 3) * 0.25}s linear infinite`,
+                animationDelay: `${i * 0.15}s`,
               }} />
             ))}
           </div>
