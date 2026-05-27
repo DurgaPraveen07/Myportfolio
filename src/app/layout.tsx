@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import CustomCursor from "@/components/CustomCursor";
+import SmoothScroll from "@/components/SmoothScroll";
+import Loader from "@/components/Loader";
+import CursorGlow from "@/components/CursorGlow";
 
 export const metadata: Metadata = {
   title: "Durga Praveen | Full Stack Developer & IoT Enthusiast",
@@ -31,8 +35,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body>{children}</body>
+    <html lang="en" className="dark scroll-smooth" suppressHydrationWarning>
+      <body className="bg-[#0A0A0F] text-[#e4e1e9] font-sans antialiased overflow-x-hidden selection:bg-[#6C63FF]/40 selection:text-white">
+        <Loader />
+        <CustomCursor />
+        <CursorGlow />
+        <SmoothScroll>
+          {children}
+        </SmoothScroll>
+      </body>
     </html>
   );
 }

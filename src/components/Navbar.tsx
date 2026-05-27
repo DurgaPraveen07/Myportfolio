@@ -1,259 +1,142 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
-
-const navLinks = [
-  { label: "About", href: "#about" },
-  { label: "Skills", href: "#skills" },
-  { label: "Projects", href: "#projects" },
-  { label: "Experience", href: "#experience" },
-  { label: "Contact", href: "#contact" },
-];
+import { motion, AnimatePresence } from "framer-motion";
+import { Menu, X, ArrowUpRight } from "lucide-react";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState("");
+  const [activeSection, setActiveSection] = useState("home");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 50);
 
-      const sections = navLinks.map((l) => l.href.slice(1));
-      for (const section of sections.reverse()) {
-        const el = document.getElementById(section);
-        if (el && window.scrollY >= el.offsetTop - 120) {
-          setActiveSection(section);
-          break;
+      // Simple scroll spy
+      const sections = ["home", "about", "skills", "projects", "experience", "contact"];
+      let current = "home";
+      
+      for (const section of sections) {
+        const element = document.getElementById(section);
+        if (element) {
+          const rect = element.getBoundingClientRect();
+          if (rect.top <= 200) {
+            current = section;
+          }
         }
       }
+      
+      setActiveSection(current);
     };
+
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const navLinks = [
+    { name: "About", href: "#about" },
+    { name: "Skills", href: "#skills" },
+    { name: "Projects", href: "#projects" },
+    { name: "Experience", href: "#experience" },
+    { name: "Contact", href: "#contact" },
+  ];
+
   return (
-    <nav
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 1000,
-        padding: "0 24px",
-        transition: "all 0.3s ease",
-        background: scrolled
-          ? "rgba(10,10,15,0.85)"
-          : "transparent",
-        backdropFilter: scrolled ? "blur(20px)" : "none",
-        borderBottom: scrolled ? "1px solid rgba(255,255,255,0.06)" : "none",
-      }}
+    <motion.header
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+      className={`fixed top-0 left-0 right-0 z-50 flex justify-center transition-all duration-700 ${
+        scrolled ? "py-4 bg-black/40 backdrop-blur-2xl border-b border-white/[0.05]" : "py-8 bg-transparent"
+      }`}
     >
-      <div
-        style={{
-          maxWidth: 1200,
-          margin: "0 auto",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          height: 70,
-        }}
-      >
+      <nav className="w-full max-w-7xl mx-auto px-6 flex items-center justify-between">
+        
         {/* Logo */}
-        <Link
-          href="/"
-          style={{
-            textDecoration: "none",
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-          }}
-        >
-          <div
-            style={{
-              width: 38,
-              height: 38,
-              borderRadius: 10,
-              background: "linear-gradient(135deg, #6C63FF, #00D4FF)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontWeight: 800,
-              fontSize: 15,
-              color: "#fff",
-              fontFamily: "'Inter', sans-serif",
-              boxShadow: "0 0 20px rgba(108,99,255,0.4)",
-            }}
-          >
+        <a href="#home" className="flex items-center gap-3 group">
+          <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center font-bold text-white shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-transform group-hover:scale-105">
             DP
           </div>
-          <span
-            style={{
-              fontWeight: 700,
-              fontSize: 16,
-              color: "#e4e1e9",
-              fontFamily: "'Inter', sans-serif",
-            }}
-          >
-            Durga Praveen
-          </span>
-        </Link>
+          <span className="text-white font-semibold text-lg hidden sm:block">Durga Praveen</span>
+        </a>
+        
+        {/* Desktop Links */}
+        <div className="hidden md:flex items-center gap-8">
+          {navLinks.map((link) => {
+            const isActive = activeSection === link.name.toLowerCase();
+            return (
+              <a
+                key={link.name}
+                href={link.href}
+                className={`relative py-2 text-[15px] font-medium transition-colors duration-300 ${
+                  isActive ? "text-white" : "text-zinc-400 hover:text-white"
+                }`}
+              >
+                {link.name}
+                {isActive && (
+                  <motion.div
+                    layoutId="activeNavIndicator"
+                    className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-8 h-[2px] bg-blue-500 rounded-full flex justify-center"
+                    transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                  >
+                    <div className="absolute top-1/2 -translate-y-1/2 w-[6px] h-[6px] bg-cyan-400 rounded-full shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
+                  </motion.div>
+                )}
+              </a>
+            );
+          })}
+        </div>
 
-        {/* Desktop nav */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 4,
-          }}
-          className="desktop-nav"
-        >
-          {navLinks.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              style={{
-                color:
-                  activeSection === link.href.slice(1)
-                    ? "#c4c0ff"
-                    : "#c7c4d8",
-                textDecoration: "none",
-                fontSize: 14,
-                fontWeight: 500,
-                padding: "6px 14px",
-                borderRadius: 8,
-                transition: "all 0.3s ease",
-                background:
-                  activeSection === link.href.slice(1)
-                    ? "rgba(108,99,255,0.12)"
-                    : "transparent",
-                fontFamily: "'Inter', sans-serif",
-              }}
-              onMouseEnter={(e) => {
-                (e.target as HTMLAnchorElement).style.color = "#e4e1e9";
-                (e.target as HTMLAnchorElement).style.background =
-                  "rgba(255,255,255,0.05)";
-              }}
-              onMouseLeave={(e) => {
-                if (activeSection !== link.href.slice(1)) {
-                  (e.target as HTMLAnchorElement).style.color = "#c7c4d8";
-                  (e.target as HTMLAnchorElement).style.background =
-                    "transparent";
-                }
-              }}
-            >
-              {link.label}
-            </a>
-          ))}
-
+        {/* Desktop Hire Me */}
+        <div className="hidden md:block">
           <a
             href="#contact"
-            style={{
-              marginLeft: 8,
-              padding: "8px 20px",
-              background: "linear-gradient(135deg, #6C63FF, #00D4FF)",
-              color: "#fff",
-              borderRadius: 9999,
-              fontSize: 14,
-              fontWeight: 600,
-              textDecoration: "none",
-              transition: "all 0.3s ease",
-              boxShadow: "0 0 20px rgba(108,99,255,0.3)",
-              fontFamily: "'Inter', sans-serif",
-            }}
-            onMouseEnter={(e) => {
-              (e.target as HTMLAnchorElement).style.boxShadow =
-                "0 0 40px rgba(108,99,255,0.6)";
-              (e.target as HTMLAnchorElement).style.transform =
-                "translateY(-2px)";
-            }}
-            onMouseLeave={(e) => {
-              (e.target as HTMLAnchorElement).style.boxShadow =
-                "0 0 20px rgba(108,99,255,0.3)";
-              (e.target as HTMLAnchorElement).style.transform = "none";
-            }}
+            className="flex items-center gap-1.5 px-6 py-2.5 rounded-full text-[15px] font-bold text-white bg-gradient-to-r from-blue-500 to-purple-500 shadow-[0_0_20px_rgba(59,130,246,0.4)] hover:shadow-[0_0_25px_rgba(59,130,246,0.6)] hover:scale-105 transition-all group"
           >
-            Hire Me
+            Hire Me <ArrowUpRight size={18} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
           </a>
         </div>
 
-        {/* Mobile menu btn */}
-        <button
-          onClick={() => setMenuOpen(!menuOpen)}
-          style={{
-            display: "none",
-            background: "none",
-            border: "1px solid rgba(255,255,255,0.1)",
-            borderRadius: 8,
-            padding: "6px 10px",
-            color: "#e4e1e9",
-            cursor: "pointer",
-            fontSize: 20,
-          }}
-          className="mobile-menu-btn"
+        {/* Mobile Menu Toggle */}
+        <button 
+          className="md:hidden text-zinc-300 hover:text-white p-2"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
         >
-          {menuOpen ? "✕" : "☰"}
+          {mobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
         </button>
-      </div>
 
-      {/* Mobile menu */}
-      {menuOpen && (
-        <div
-          style={{
-            background: "rgba(19,19,24,0.98)",
-            backdropFilter: "blur(20px)",
-            borderTop: "1px solid rgba(255,255,255,0.08)",
-            padding: "16px 24px 24px",
-          }}
-        >
-          {navLinks.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              onClick={() => setMenuOpen(false)}
-              style={{
-                display: "block",
-                color: "#c7c4d8",
-                textDecoration: "none",
-                fontSize: 16,
-                fontWeight: 500,
-                padding: "12px 0",
-                borderBottom: "1px solid rgba(255,255,255,0.06)",
-                fontFamily: "'Inter', sans-serif",
-              }}
-            >
-              {link.label}
-            </a>
-          ))}
-          <a
-            href="#contact"
-            onClick={() => setMenuOpen(false)}
-            style={{
-              display: "block",
-              marginTop: 16,
-              padding: "12px",
-              background: "linear-gradient(135deg, #6C63FF, #00D4FF)",
-              color: "#fff",
-              borderRadius: 9999,
-              fontSize: 15,
-              fontWeight: 600,
-              textDecoration: "none",
-              textAlign: "center",
-              fontFamily: "'Inter', sans-serif",
-            }}
+      </nav>
+
+      {/* Mobile Dropdown Menu */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="absolute top-full left-0 right-0 bg-black/90 backdrop-blur-3xl border-b border-white/[0.05] p-6 flex flex-col gap-4 shadow-2xl md:hidden"
           >
-            Hire Me
-          </a>
-        </div>
-      )}
-
-      <style>{`
-        @media (max-width: 768px) {
-          .desktop-nav { display: none !important; }
-          .mobile-menu-btn { display: block !important; }
-        }
-      `}</style>
-    </nav>
+            {navLinks.map((link) => (
+              <a
+                key={link.name}
+                href={link.href}
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-lg font-medium text-zinc-300 hover:text-white"
+              >
+                {link.name}
+              </a>
+            ))}
+            <a
+              href="#contact"
+              onClick={() => setMobileMenuOpen(false)}
+              className="mt-4 flex items-center justify-center gap-2 px-6 py-4 rounded-full font-bold text-white bg-gradient-to-r from-blue-500 to-purple-500 shadow-[0_0_20px_rgba(59,130,246,0.4)] text-center"
+            >
+              Hire Me <ArrowUpRight size={18} />
+            </a>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.header>
   );
 }

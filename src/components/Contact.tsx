@@ -1,820 +1,341 @@
 "use client";
 
-import { useState, useRef, useEffect, FormEvent } from "react";
+import { useState, useRef, FormEvent, useCallback } from "react";
 import { personalInfo } from "@/data/portfolio";
+import { motion } from "framer-motion";
+import { Mail, MapPin, RefreshCw, ExternalLink } from "lucide-react";
+import { LinkedinIcon, InstagramIcon, GithubIcon } from "./SocialIcons";
 
-export default function Contact() {
-  const [visible, setVisible] = useState(false);
-  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
-  const [errorMessage, setErrorMessage] = useState("");
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    subject: "",
-    message: "",
-    captchaAnswer: "",
-  });
-  const [captchaChallenge, setCaptchaChallenge] = useState("");
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+/* ─── Shared styles matching the Vercel reference ─────────────────────────── */
+const inputStyle: React.CSSProperties = {
+  width: "100%",
+  background: "rgba(255,255,255,0.03)",
+  border: "1px solid rgba(255,255,255,0.08)",
+  borderRadius: "12px",
+  padding: "12px 16px",
+  color: "#e4e1e9",
+  fontSize: "14px",
+  outline: "none",
+  transition: "border-color 0.3s, background 0.3s",
+  fontFamily: "Inter, sans-serif",
+};
 
-  const ref = useRef<HTMLElement>(null);
+const labelStyle: React.CSSProperties = {
+  fontSize: "11px",
+  fontFamily: "'JetBrains Mono', monospace",
+  color: "#6C63FF",
+  letterSpacing: "0.12em",
+  textTransform: "uppercase",
+  display: "block",
+  marginBottom: "8px",
+};
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) setVisible(true);
-      },
-      { threshold: 0.1 }
-    );
-    if (ref.current) observer.observe(ref.current);
-    generateCaptcha();
-    return () => observer.disconnect();
+/* ─── Info card with cursor-tracked glow ──────────────────────────────────── */
+function InfoCard({
+  icon,
+  label,
+  value,
+  href,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  href?: string | null;
+}) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [glow, setGlow] = useState({ x: 50, y: 50, on: false });
+
+  const onMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const r = cardRef.current?.getBoundingClientRect();
+    if (!r) return;
+    setGlow({ x: ((e.clientX - r.left) / r.width) * 100, y: ((e.clientY - r.top) / r.height) * 100, on: true });
   }, []);
+  const onLeave = () => setGlow((g) => ({ ...g, on: false }));
 
-  const generateCaptcha = () => {
-    const num1 = Math.floor(Math.random() * 8) + 2;
-    const num2 = Math.floor(Math.random() * 8) + 2;
-    setCaptchaChallenge(`${num1} + ${num2}`);
-    setForm((prev) => ({ ...prev, captchaAnswer: "" }));
+  const inner = (
+    <div className="relative flex items-center gap-4 p-5" ref={cardRef} onMouseMove={onMove} onMouseLeave={onLeave}>
+      {/* cursor glow */}
+      <div
+        className="absolute pointer-events-none rounded-full transition-opacity duration-300"
+        style={{
+          width: 200, height: 200,
+          left: `${glow.x}%`, top: `${glow.y}%`,
+          transform: "translate(-50%,-50%)",
+          background: "radial-gradient(circle, rgba(108,99,255,0.12) 0%, transparent 70%)",
+          opacity: glow.on ? 1 : 0,
+        }}
+      />
+      {/* Icon circle */}
+      <div
+        className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-white relative z-10"
+        style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}
+      >
+        {icon}
+      </div>
+      <div className="flex-1 min-w-0 relative z-10">
+        <p style={{ fontSize: "10px", fontFamily: "'JetBrains Mono', monospace", color: "#6C63FF", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 4 }}>
+          {label}
+        </p>
+        <p style={{ fontSize: "14px", color: "#c7c4d8", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {value}
+        </p>
+      </div>
+      {href && (
+        <ExternalLink size={13} className="text-zinc-700 group-hover:text-white transition-colors flex-shrink-0 relative z-10" />
+      )}
+    </div>
+  );
+
+  const cardStyle: React.CSSProperties = {
+    borderRadius: 16,
+    background: "rgba(255,255,255,0.025)",
+    border: "1px solid rgba(255,255,255,0.06)",
+    overflow: "hidden",
+    transition: "border-color 0.3s",
   };
 
-  const validate = () => {
-    const errors: Record<string, string> = {};
+  return href ? (
+    <a href={href} target={href.startsWith("http") ? "_blank" : undefined} rel="noopener noreferrer"
+      className="group block hover:border-[rgba(108,99,255,0.3)]" style={cardStyle}>
+      {inner}
+    </a>
+  ) : (
+    <div style={cardStyle}>{inner}</div>
+  );
+}
 
-    if (!form.name.trim()) {
-      errors.name = "Full name is required";
-    } else if (form.name.trim().length < 2) {
-      errors.name = "Name must be at least 2 characters";
-    }
+/* ─── Main Contact section ─────────────────────────────────────────────────── */
+export default function Contact() {
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const formRef = useRef<HTMLFormElement>(null);
+  const [captcha, setCaptcha] = useState({ num1: 4, num2: 8, answer: "" });
 
-    if (!form.email.trim()) {
-      errors.email = "Email address is required";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
-      errors.email = "Please enter a valid email address";
-    }
-
-    if (form.phone.trim()) {
-      if (!/^\+?[0-9\s-]{7,15}$/.test(form.phone.trim())) {
-        errors.phone = "Please enter a valid phone number";
-      }
-    }
-
-    if (!form.subject.trim()) {
-      errors.subject = "Subject is required";
-    } else if (form.subject.trim().length < 3) {
-      errors.subject = "Subject must be at least 3 characters";
-    }
-
-    if (!form.message.trim()) {
-      errors.message = "Message content is required";
-    } else if (form.message.trim().length < 10) {
-      errors.message = "Message must be at least 10 characters";
-    }
-
-    if (!form.captchaAnswer.trim()) {
-      errors.captchaAnswer = "Spam check solution is required";
-    }
-
-    setFieldErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
+  const refreshCaptcha = () =>
+    setCaptcha({ num1: Math.floor(Math.random() * 10) + 1, num2: Math.floor(Math.random() * 10) + 1, answer: "" });
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setErrorMessage("");
-
-    if (!validate()) return;
-
+    if (!formRef.current) return;
+    if (parseInt(captcha.answer) !== captcha.num1 + captcha.num2) {
+      alert("Incorrect answer. Please try again.");
+      refreshCaptcha();
+      return;
+    }
     setStatus("sending");
-
+    const data = new FormData(formRef.current);
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "";
-      const response = await fetch(`${backendUrl}/api/contact`, {
+      const res = await fetch("/api/contact", {
         method: "POST",
+        body: JSON.stringify(Object.fromEntries(data)),
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...form,
-          captchaChallenge,
-        }),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to deliver message.");
-      }
-
-      setStatus("sent");
-      setForm({
-        name: "",
-        email: "",
-        phone: "",
-        subject: "",
-        message: "",
-        captchaAnswer: "",
-      });
-      generateCaptcha();
-    } catch (err: any) {
-      setStatus("error");
-      setErrorMessage(err.message || "An unexpected error occurred.");
-      generateCaptcha();
-    }
+      if (res.ok) { setStatus("sent"); formRef.current.reset(); refreshCaptcha(); setTimeout(() => setStatus("idle"), 5000); }
+      else { setStatus("error"); setTimeout(() => setStatus("idle"), 3000); }
+    } catch { setStatus("error"); setTimeout(() => setStatus("idle"), 3000); }
   };
 
-  const handleInputChange = (field: string, value: string) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
-    if (fieldErrors[field]) {
-      setFieldErrors((prev) => {
-        const next = { ...prev };
-        delete next[field];
-        return next;
-      });
-    }
+  /* Focus-input glow */
+  const focusStyle = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    e.target.style.borderColor = "rgba(108,99,255,0.5)";
+    e.target.style.background = "rgba(108,99,255,0.05)";
+    e.target.style.boxShadow = "0 0 0 3px rgba(108,99,255,0.08)";
   };
-
-  const contactItems = [
-    {
-      icon: "✉️",
-      label: "Email",
-      value: personalInfo.email,
-      href: `mailto:${personalInfo.email}`,
-    },
-    {
-      icon: "💼",
-      label: "LinkedIn",
-      value: "linkedin.com/in/chennuboyina-durga-praveen",
-      href: personalInfo.linkedin,
-    },
-    {
-      icon: "📸",
-      label: "Instagram",
-      value: "instagram.com/irisarc.studio",
-      href: personalInfo.instagram,
-    },
-    { icon: "📍", label: "Location", value: personalInfo.location, href: null },
-  ];
-
-  const inputStyle = (hasError: boolean) => ({
-    width: "100%",
-    padding: "14px 16px",
-    background: "rgba(255, 255, 255, 0.02)",
-    border: hasError
-      ? "1px solid rgba(239, 68, 68, 0.5)"
-      : "1px solid rgba(255, 255, 255, 0.08)",
-    borderRadius: 12,
-    color: "#e4e1e9",
-    fontSize: 15,
-    fontFamily: "'Inter', sans-serif",
-    outline: "none",
-    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-    boxSizing: "border-box" as const,
-  });
+  const blurStyle = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    e.target.style.borderColor = "rgba(255,255,255,0.08)";
+    e.target.style.background = "rgba(255,255,255,0.03)";
+    e.target.style.boxShadow = "none";
+  };
 
   return (
     <section
-      ref={ref}
       id="contact"
-      className="section bg-grid"
-      style={{ position: "relative", overflow: "hidden" }}
+      className="relative w-full"
+      style={{ background: "#0A0A0F", paddingTop: "100px", paddingBottom: "100px", overflow: "hidden" }}
     >
-      {/* Glow Blobs */}
-      <div
-        className="blob"
-        style={{
-          width: 500,
-          height: 500,
-          background: "rgba(108,99,255,0.06)",
-          bottom: "-100px",
-          left: "-100px",
-        }}
-      />
-      <div
-        className="blob"
-        style={{
-          width: 400,
-          height: 400,
-          background: "rgba(0,212,255,0.05)",
-          top: "10%",
-          right: "-50px",
-        }}
-      />
+      {/* Blobs */}
+      <div style={{ position: "absolute", top: "20%", left: 0, width: "40%", height: "60%", background: "rgba(108,99,255,0.07)", filter: "blur(120px)", pointerEvents: "none" }} />
+      <div style={{ position: "absolute", bottom: "10%", right: 0, width: "35%", height: "50%", background: "rgba(0,212,255,0.05)", filter: "blur(100px)", pointerEvents: "none" }} />
 
-      <div className="container">
-        {/* Header */}
-        <div
-          style={{
-            textAlign: "center",
-            marginBottom: 80,
-            opacity: visible ? 1 : 0,
-            transform: visible ? "translateY(0)" : "translateY(30px)",
-            transition: "all 0.7s ease",
-          }}
+      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
+        {/* Section header — exactly like reference */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.8 }}
+          style={{ marginBottom: 60 }}
         >
-          <div className="section-label" style={{ justifyContent: "center" }}>
-            Get in touch
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+            <span style={{ width: 32, height: 3, borderRadius: 2, background: "linear-gradient(90deg,#6C63FF,#00D4FF)", display: "inline-block" }} />
+            <span style={{ fontSize: 12, fontFamily: "'JetBrains Mono', monospace", color: "#6C63FF", letterSpacing: "0.15em", textTransform: "uppercase" }}>Get in touch</span>
           </div>
-          <h2 className="section-title">
-            Let&apos;s <span className="gradient-text">Connect</span>
+          <h2 style={{ fontSize: "clamp(40px,6vw,64px)", fontWeight: 900, letterSpacing: "-0.03em", lineHeight: 1.05, color: "#e4e1e9", marginBottom: 16 }}>
+            Let&apos;s <span style={{ background: "linear-gradient(135deg, #6C63FF, #00D4FF)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Connect</span>
           </h2>
-          <p className="section-desc" style={{ margin: "0 auto" }}>
-            Have an idea or project? Let&apos;s build something amazing together.
-            Your message will be sent instantly to my inbox and WhatsApp.
+          <p style={{ fontSize: 16, color: "#918fa1", lineHeight: 1.7, maxWidth: 500 }}>
+            Open to exciting new opportunities and collaborations.<br />
+            Let&apos;s build something amazing together!
           </p>
-        </div>
+        </motion.div>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1.5fr",
-            gap: 48,
-            alignItems: "start",
-          }}
-          className="contact-grid"
-        >
-          {/* Left Column — Contact Info */}
-          <div
+        {/* Two-column layout */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1.35fr", gap: 24, alignItems: "start" }}>
+
+          {/* LEFT: Info cards */}
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, delay: 0.1 }}
+            style={{ display: "flex", flexDirection: "column", gap: 12 }}
+          >
+            {/* Available badge */}
+            <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "16px 20px", borderRadius: 16, background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.2)" }}>
+              <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#22c55e", boxShadow: "0 0 8px rgba(34,197,94,0.7)", animation: "pulse 2s infinite" }} />
+              </div>
+              <div>
+                <p style={{ fontSize: 14, fontWeight: 700, color: "#e4e1e9" }}>Available for Projects</p>
+                <p style={{ fontSize: 13, color: "#4ade80", marginTop: 2 }}>Open to exciting new opportunities</p>
+              </div>
+            </div>
+
+            <InfoCard icon={<Mail size={16} />} label="Email" value={personalInfo.email} href={`mailto:${personalInfo.email}`} />
+            <InfoCard icon={<LinkedinIcon size={16} />} label="LinkedIn" value="linkedin.com/in/chennuboyina-durga-praveen" href={personalInfo.linkedin} />
+            <InfoCard icon={<InstagramIcon size={16} />} label="Instagram" value="instagram.com/irisarc.studio" href={personalInfo.instagram} />
+            <InfoCard icon={<MapPin size={16} />} label="Location" value={personalInfo.location} />
+          </motion.div>
+
+          {/* RIGHT: Form — glass card matching reference */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, delay: 0.15 }}
             style={{
-              opacity: visible ? 1 : 0,
-              transform: visible ? "translateX(0)" : "translateX(-30px)",
-              transition: "all 0.7s ease 0.1s",
-              display: "flex",
-              flexDirection: "column",
-              gap: 20,
+              borderRadius: 20,
+              background: "rgba(255,255,255,0.02)",
+              border: "1px solid rgba(108,99,255,0.15)",
+              padding: "40px",
+              backdropFilter: "blur(20px)",
+              boxShadow: "0 0 60px rgba(108,99,255,0.08), inset 0 1px 0 rgba(255,255,255,0.05)",
             }}
           >
-            {/* Availability Widget */}
-            <div
-              className="glass-card"
-              style={{
-                padding: 24,
-                display: "flex",
-                alignItems: "center",
-                gap: 16,
-              }}
-            >
-              <div
+            <h3 style={{ fontSize: 24, fontWeight: 700, color: "#e4e1e9", marginBottom: 32 }}>Send Message</h3>
+
+            <form ref={formRef} onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                <div>
+                  <label style={labelStyle}>Full Name *</label>
+                  <input type="text" name="name" required style={inputStyle} placeholder="John Doe"
+                    onFocus={focusStyle} onBlur={blurStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Email Address *</label>
+                  <input type="email" name="email" required style={inputStyle} placeholder="john@example.com"
+                    onFocus={focusStyle} onBlur={blurStyle} />
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                <div>
+                  <label style={labelStyle}>Phone Number (optional)</label>
+                  <input type="tel" name="phone" style={inputStyle} placeholder="+1 (555) 000-0000"
+                    onFocus={focusStyle} onBlur={blurStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Subject *</label>
+                  <div style={{ position: "relative" }}>
+                    <select name="subject" required defaultValue="Project Inquiry"
+                      style={{ ...inputStyle, appearance: "none", cursor: "pointer" }}
+                      onFocus={focusStyle} onBlur={blurStyle}>
+                      <option value="Project Inquiry">Project Inquiry</option>
+                      <option value="Freelance Work">Freelance Work</option>
+                      <option value="Collaboration">Collaboration</option>
+                      <option value="Just Saying Hi">Just Saying Hi</option>
+                    </select>
+                    <div style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "#6C63FF" }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m6 9 6 6 6-6" /></svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label style={labelStyle}>Message *</label>
+                <textarea name="message" required rows={4}
+                  style={{ ...inputStyle, resize: "vertical", minHeight: 110 }}
+                  placeholder="Tell me about your project, timing, and requirements..."
+                  onFocus={focusStyle} onBlur={blurStyle} />
+              </div>
+
+              {/* Captcha — matching reference screenshot exactly */}
+              <div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                  <label style={{ ...labelStyle, marginBottom: 0 }}>Spam Protection: Solve this equation *</label>
+                  <button type="button" onClick={refreshCaptcha}
+                    style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, fontFamily: "'JetBrains Mono', monospace", color: "#6C63FF", cursor: "pointer", background: "none", border: "none", letterSpacing: "0.1em" }}>
+                    <RefreshCw size={11} /> Refresh
+                  </button>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 20px", borderRadius: 12, background: "rgba(108,99,255,0.08)", border: "1px solid rgba(108,99,255,0.2)", fontFamily: "'JetBrains Mono', monospace", fontSize: 18, fontWeight: 700, color: "#a2e7ff", whiteSpace: "nowrap", minWidth: 140, justifyContent: "center" }}>
+                    <span>{captcha.num1}</span>
+                    <span style={{ color: "#6C63FF" }}>+</span>
+                    <span>{captcha.num2}</span>
+                    <span style={{ color: "#6C63FF" }}>=</span>
+                    <span style={{ color: "#918fa1" }}>?</span>
+                  </div>
+                  <input type="number" value={captcha.answer}
+                    onChange={(e) => setCaptcha({ ...captcha, answer: e.target.value })}
+                    required style={{ ...inputStyle, flex: 1 }} placeholder="Your answer"
+                    onFocus={focusStyle} onBlur={blurStyle} />
+                </div>
+              </div>
+
+              {/* Submit button — exactly like reference: wide gradient pill */}
+              <button
+                type="submit"
+                disabled={status === "sending"}
                 style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: "50%",
-                  background: "rgba(34,197,94,0.1)",
-                  border: "1px solid rgba(34,197,94,0.25)",
+                  width: "100%",
+                  padding: "16px",
+                  borderRadius: 12,
+                  background: "linear-gradient(135deg, #6C63FF 0%, #00D4FF 100%)",
+                  color: "#fff",
+                  fontSize: 14,
+                  fontWeight: 700,
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  border: "none",
+                  cursor: status === "sending" ? "not-allowed" : "pointer",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  flexShrink: 0,
+                  gap: 10,
+                  opacity: status === "sending" ? 0.7 : 1,
+                  transition: "all 0.3s ease",
+                  boxShadow: "0 0 30px rgba(108,99,255,0.35)",
                 }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = "0.9"; (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 50px rgba(108,99,255,0.55)"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = "1"; (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 30px rgba(108,99,255,0.35)"; }}
               >
-                <div className="status-dot" />
-              </div>
-              <div>
-                <p style={{ fontWeight: 600, fontSize: 15, color: "#e4e1e9" }}>
-                  Available for Projects
-                </p>
-                <p style={{ color: "#4ade80", fontSize: 13, marginTop: 2 }}>
-                  Open to exciting new opportunities
-                </p>
-              </div>
-            </div>
-
-            {/* Quick Contacts */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {contactItems.map((item) => (
-                <div
-                  key={item.label}
-                  className="glass-card"
-                  style={{ padding: "20px 24px" }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                    <div
-                      style={{
-                        width: 44,
-                        height: 44,
-                        borderRadius: 12,
-                        background: "rgba(108,99,255,0.08)",
-                        border: "1px solid rgba(108,99,255,0.15)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: 20,
-                        flexShrink: 0,
-                      }}
-                    >
-                      {item.icon}
-                    </div>
-                    <div>
-                      <p
-                        style={{
-                          fontSize: 11,
-                          fontFamily: "'JetBrains Mono', monospace",
-                          color: "#918fa1",
-                          marginBottom: 3,
-                          letterSpacing: "0.08em",
-                        }}
-                      >
-                        {item.label.toUpperCase()}
-                      </p>
-                      {item.href ? (
-                        <a
-                          href={item.href}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{
-                            color: "#c4c0ff",
-                            fontSize: 14,
-                            fontWeight: 500,
-                            textDecoration: "none",
-                            transition: "color 0.3s",
-                          }}
-                          onMouseEnter={(e) =>
-                            ((e.target as HTMLAnchorElement).style.color =
-                              "#00D4FF")
-                          }
-                          onMouseLeave={(e) =>
-                            ((e.target as HTMLAnchorElement).style.color =
-                              "#c4c0ff")
-                          }
-                        >
-                          {item.value}
-                        </a>
-                      ) : (
-                        <span style={{ color: "#c7c4d8", fontSize: 14 }}>
-                          {item.value}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Right Column — Contact Form */}
-          <div
-            className="glass-card"
-            style={{
-              padding: 40,
-              opacity: visible ? 1 : 0,
-              transform: visible ? "translateX(0)" : "translateX(30px)",
-              transition: "all 0.7s ease 0.2s",
-              position: "relative",
-            }}
-          >
-            {status === "sent" ? (
-              <div
-                style={{
-                  textAlign: "center",
-                  padding: "48px 24px",
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: 64,
-                    marginBottom: 20,
-                    animation: "scaleIn 0.5s ease forwards",
-                  }}
-                >
-                  🚀
-                </div>
-                <h4
-                  style={{
-                    fontSize: 24,
-                    fontWeight: 800,
-                    marginBottom: 10,
-                    color: "#00D4FF",
-                  }}
-                >
-                  Message Delivered!
-                </h4>
-                <p style={{ color: "#c7c4d8", fontSize: 15, lineHeight: 1.6 }}>
-                  Thank you! The message was transmitted to my email and
-                  WhatsApp. I will get back to you shortly.
-                </p>
-                <button
-                  onClick={() => setStatus("idle")}
-                  className="btn-outline"
-                  style={{ marginTop: 28 }}
-                >
-                  Send another message
-                </button>
-              </div>
-            ) : (
-              <div>
-                <h3
-                  style={{
-                    fontSize: 22,
-                    fontWeight: 700,
-                    marginBottom: 24,
-                    color: "#e4e1e9",
-                  }}
-                >
-                  Send Message
-                </h3>
-
-                {status === "error" && (
-                  <div
-                    style={{
-                      background: "rgba(239, 68, 68, 0.1)",
-                      border: "1px solid rgba(239, 68, 68, 0.25)",
-                      borderRadius: 12,
-                      padding: 16,
-                      marginBottom: 24,
-                      color: "#f87171",
-                      fontSize: 14,
-                    }}
-                  >
-                    ⚠️ {errorMessage}
-                  </div>
-                )}
-
-                <form
-                  onSubmit={handleSubmit}
-                  style={{ display: "flex", flexDirection: "column", gap: 20 }}
-                >
-                  {/* Name and Email side-by-side */}
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr",
-                      gap: 16,
-                    }}
-                    className="contact-grid"
-                  >
-                    <div>
-                      <label
-                        style={{
-                          fontSize: 11,
-                          color: "#918fa1",
-                          fontFamily: "'JetBrains Mono', monospace",
-                          letterSpacing: "0.08em",
-                          display: "block",
-                          marginBottom: 8,
-                        }}
-                      >
-                        FULL NAME *
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="John Doe"
-                        value={form.name}
-                        onChange={(e) =>
-                          handleInputChange("name", e.target.value)
-                        }
-                        style={inputStyle(!!fieldErrors.name)}
-                        onFocus={(e) => {
-                          (e.target as HTMLInputElement).style.borderColor =
-                            "rgba(108,99,255,0.6)";
-                          (e.target as HTMLInputElement).style.boxShadow =
-                            "0 0 20px rgba(108,99,255,0.15)";
-                        }}
-                        onBlur={(e) => {
-                          (e.target as HTMLInputElement).style.borderColor =
-                            fieldErrors.name
-                              ? "rgba(239,68,68,0.5)"
-                              : "rgba(255,255,255,0.08)";
-                          (e.target as HTMLInputElement).style.boxShadow =
-                            "none";
-                        }}
-                      />
-                      {fieldErrors.name && (
-                        <p
-                          style={{
-                            color: "#ef4444",
-                            fontSize: 12,
-                            marginTop: 6,
-                          }}
-                        >
-                          {fieldErrors.name}
-                        </p>
-                      )}
-                    </div>
-                    <div>
-                      <label
-                        style={{
-                          fontSize: 11,
-                          color: "#918fa1",
-                          fontFamily: "'JetBrains Mono', monospace",
-                          letterSpacing: "0.08em",
-                          display: "block",
-                          marginBottom: 8,
-                        }}
-                      >
-                        EMAIL ADDRESS *
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="john@example.com"
-                        value={form.email}
-                        onChange={(e) =>
-                          handleInputChange("email", e.target.value)
-                        }
-                        style={inputStyle(!!fieldErrors.email)}
-                        onFocus={(e) => {
-                          (e.target as HTMLInputElement).style.borderColor =
-                            "rgba(108,99,255,0.6)";
-                          (e.target as HTMLInputElement).style.boxShadow =
-                            "0 0 20px rgba(108,99,255,0.15)";
-                        }}
-                        onBlur={(e) => {
-                          (e.target as HTMLInputElement).style.borderColor =
-                            fieldErrors.email
-                              ? "rgba(239,68,68,0.5)"
-                              : "rgba(255,255,255,0.08)";
-                          (e.target as HTMLInputElement).style.boxShadow =
-                            "none";
-                        }}
-                      />
-                      {fieldErrors.email && (
-                        <p
-                          style={{
-                            color: "#ef4444",
-                            fontSize: 12,
-                            marginTop: 6,
-                          }}
-                        >
-                          {fieldErrors.email}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Phone (Optional) and Subject */}
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr",
-                      gap: 16,
-                    }}
-                    className="contact-grid"
-                  >
-                    <div>
-                      <label
-                        style={{
-                          fontSize: 11,
-                          color: "#918fa1",
-                          fontFamily: "'JetBrains Mono', monospace",
-                          letterSpacing: "0.08em",
-                          display: "block",
-                          marginBottom: 8,
-                        }}
-                      >
-                        PHONE NUMBER (OPTIONAL)
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="+1 (555) 000-0000"
-                        value={form.phone}
-                        onChange={(e) =>
-                          handleInputChange("phone", e.target.value)
-                        }
-                        style={inputStyle(!!fieldErrors.phone)}
-                        onFocus={(e) => {
-                          (e.target as HTMLInputElement).style.borderColor =
-                            "rgba(108,99,255,0.6)";
-                          (e.target as HTMLInputElement).style.boxShadow =
-                            "0 0 20px rgba(108,99,255,0.15)";
-                        }}
-                        onBlur={(e) => {
-                          (e.target as HTMLInputElement).style.borderColor =
-                            fieldErrors.phone
-                              ? "rgba(239,68,68,0.5)"
-                              : "rgba(255,255,255,0.08)";
-                          (e.target as HTMLInputElement).style.boxShadow =
-                            "none";
-                        }}
-                      />
-                      {fieldErrors.phone && (
-                        <p
-                          style={{
-                            color: "#ef4444",
-                            fontSize: 12,
-                            marginTop: 6,
-                          }}
-                        >
-                          {fieldErrors.phone}
-                        </p>
-                      )}
-                    </div>
-                    <div>
-                      <label
-                        style={{
-                          fontSize: 11,
-                          color: "#918fa1",
-                          fontFamily: "'JetBrains Mono', monospace",
-                          letterSpacing: "0.08em",
-                          display: "block",
-                          marginBottom: 8,
-                        }}
-                      >
-                        SUBJECT *
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="Project Inquiry"
-                        value={form.subject}
-                        onChange={(e) =>
-                          handleInputChange("subject", e.target.value)
-                        }
-                        style={inputStyle(!!fieldErrors.subject)}
-                        onFocus={(e) => {
-                          (e.target as HTMLInputElement).style.borderColor =
-                            "rgba(108,99,255,0.6)";
-                          (e.target as HTMLInputElement).style.boxShadow =
-                            "0 0 20px rgba(108,99,255,0.15)";
-                        }}
-                        onBlur={(e) => {
-                          (e.target as HTMLInputElement).style.borderColor =
-                            fieldErrors.subject
-                              ? "rgba(239,68,68,0.5)"
-                              : "rgba(255,255,255,0.08)";
-                          (e.target as HTMLInputElement).style.boxShadow =
-                            "none";
-                        }}
-                      />
-                      {fieldErrors.subject && (
-                        <p
-                          style={{
-                            color: "#ef4444",
-                            fontSize: 12,
-                            marginTop: 6,
-                          }}
-                        >
-                          {fieldErrors.subject}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Message */}
-                  <div>
-                    <label
-                      style={{
-                        fontSize: 11,
-                        color: "#918fa1",
-                        fontFamily: "'JetBrains Mono', monospace",
-                        letterSpacing: "0.08em",
-                        display: "block",
-                        marginBottom: 8,
-                      }}
-                    >
-                      MESSAGE *
-                    </label>
-                    <textarea
-                      rows={5}
-                      placeholder="Tell me about your project, timing, and requirements..."
-                      value={form.message}
-                      onChange={(e) =>
-                        handleInputChange("message", e.target.value)
-                      }
-                      style={{
-                        ...inputStyle(!!fieldErrors.message),
-                        resize: "vertical",
-                        minHeight: 120,
-                      }}
-                      onFocus={(e) => {
-                        (e.target as HTMLTextAreaElement).style.borderColor =
-                          "rgba(108,99,255,0.6)";
-                        (e.target as HTMLTextAreaElement).style.boxShadow =
-                          "0 0 20px rgba(108,99,255,0.15)";
-                      }}
-                      onBlur={(e) => {
-                        (e.target as HTMLTextAreaElement).style.borderColor =
-                          fieldErrors.message
-                            ? "rgba(239,68,68,0.5)"
-                            : "rgba(255,255,255,0.08)";
-                        (e.target as HTMLTextAreaElement).style.boxShadow =
-                          "none";
-                      }}
-                    />
-                    {fieldErrors.message && (
-                      <p
-                        style={{ color: "#ef4444", fontSize: 12, marginTop: 6 }}
-                      >
-                        {fieldErrors.message}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Anti-spam math captcha */}
-                  <div
-                    style={{
-                      background: "rgba(255, 255, 255, 0.01)",
-                      border: "1px solid rgba(255, 255, 255, 0.05)",
-                      borderRadius: 12,
-                      padding: 16,
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 12,
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                      }}
-                    >
-                      <span
-                        style={{
-                          fontSize: 12,
-                          color: "#918fa1",
-                          fontFamily: "'JetBrains Mono', monospace",
-                        }}
-                      >
-                        SPAM PROTECTION: Solve this equation *
-                      </span>
-                      <button
-                        type="button"
-                        onClick={generateCaptcha}
-                        style={{
-                          background: "none",
-                          border: "none",
-                          color: "#8B5CF6",
-                          cursor: "pointer",
-                          fontSize: 12,
-                        }}
-                        title="Refresh Captcha"
-                      >
-                        🔄 Refresh
-                      </button>
-                    </div>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 16,
-                      }}
-                    >
-                      <div
-                        style={{
-                          background: "rgba(108,99,255,0.1)",
-                          border: "1px solid rgba(108,99,255,0.25)",
-                          borderRadius: 8,
-                          padding: "10px 16px",
-                          fontFamily: "'JetBrains Mono', monospace",
-                          fontSize: 18,
-                          fontWeight: "bold",
-                          color: "#00D4FF",
-                          letterSpacing: 2,
-                          minWidth: 100,
-                          textAlign: "center",
-                        }}
-                      >
-                        {captchaChallenge} = ?
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <input
-                          type="text"
-                          placeholder="Your answer"
-                          value={form.captchaAnswer}
-                          onChange={(e) =>
-                            handleInputChange("captchaAnswer", e.target.value)
-                          }
-                          style={inputStyle(!!fieldErrors.captchaAnswer)}
-                        />
-                      </div>
-                    </div>
-                    {fieldErrors.captchaAnswer && (
-                      <p style={{ color: "#ef4444", fontSize: 12 }}>
-                        {fieldErrors.captchaAnswer}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Submit Button */}
-                  <button
-                    type="submit"
-                    disabled={status === "sending"}
-                    className="btn-primary"
-                    style={{
-                      width: "100%",
-                      justifyContent: "center",
-                      opacity: status === "sending" ? 0.7 : 1,
-                      cursor: status === "sending" ? "not-allowed" : "pointer",
-                      padding: "16px 32px",
-                      position: "relative",
-                      overflow: "hidden",
-                    }}
-                  >
-                    <span>
-                      {status === "sending" ? "TRANSMITTING..." : "SEND MESSAGE"}
-                    </span>
-                    <span style={{ position: "relative", zIndex: 1 }}>
-                      {status === "sending" ? "⏳" : "→"}
-                    </span>
-                  </button>
-                </form>
-              </div>
-            )}
-          </div>
+                {status === "idle" && <><span>SEND MESSAGE</span><span style={{ fontSize: 18 }}>→</span></>}
+                {status === "sending" && <><RefreshCw size={16} className="animate-spin" /> SENDING...</>}
+                {status === "sent" && "✓ MESSAGE SENT SUCCESSFULLY!"}
+                {status === "error" && "✕ ERROR — PLEASE TRY AGAIN"}
+              </button>
+            </form>
+          </motion.div>
         </div>
       </div>
 
       <style>{`
         @media (max-width: 768px) {
-          .contact-grid { grid-template-columns: 1fr !important; }
+          #contact > div > div:last-child { grid-template-columns: 1fr !important; }
         }
+        @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(0.85); } }
       `}</style>
     </section>
   );

@@ -1,164 +1,32 @@
 "use client";
 
 import { personalInfo } from "@/data/portfolio";
+import { ArrowUp } from "lucide-react";
 
 export default function Footer() {
   const year = new Date().getFullYear();
 
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
-    <footer
-      style={{
-        borderTop: "1px solid rgba(255,255,255,0.06)",
-        padding: "48px 24px",
-        position: "relative",
-        overflow: "hidden",
-      }}
-    >
-      {/* Gradient line */}
-      <div
-        style={{
-          position: "absolute",
-          top: 0,
-          left: "20%",
-          right: "20%",
-          height: 1,
-          background: "linear-gradient(90deg, transparent, rgba(108,99,255,0.5), transparent)",
-        }}
-      />
-
-      <div
-        style={{
-          maxWidth: 1200,
-          margin: "0 auto",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 24,
-          textAlign: "center",
-        }}
-      >
-        {/* Logo */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-          }}
-        >
-          <div
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: 9,
-              background: "linear-gradient(135deg, #6C63FF, #00D4FF)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontWeight: 800,
-              fontSize: 14,
-              color: "#fff",
-              fontFamily: "'Inter', sans-serif",
-            }}
-          >
-            DP
-          </div>
-          <span
-            style={{
-              fontWeight: 700,
-              fontSize: 16,
-              color: "#e4e1e9",
-              fontFamily: "'Inter', sans-serif",
-            }}
-          >
-            Durga Praveen
-          </span>
-        </div>
-
-        {/* Nav links */}
-        <nav style={{ display: "flex", gap: 24, flexWrap: "wrap", justifyContent: "center" }}>
-          {["About", "Skills", "Projects", "Experience", "Contact"].map((link) => (
-            <a
-              key={link}
-              href={`#${link.toLowerCase()}`}
-              style={{
-                color: "#918fa1",
-                textDecoration: "none",
-                fontSize: 14,
-                transition: "color 0.3s",
-                fontFamily: "'Inter', sans-serif",
-              }}
-              onMouseEnter={(e) =>
-                ((e.target as HTMLAnchorElement).style.color = "#c4c0ff")
-              }
-              onMouseLeave={(e) =>
-                ((e.target as HTMLAnchorElement).style.color = "#918fa1")
-              }
-            >
-              {link}
-            </a>
-          ))}
-        </nav>
-
-        {/* Socials */}
-        <div style={{ display: "flex", gap: 12 }}>
-          {[
-            { label: "GitHub", href: personalInfo.github, icon: "🐙" },
-            { label: "LinkedIn", href: personalInfo.linkedin, icon: "💼" },
-            { label: "Instagram", href: personalInfo.instagram, icon: "📸" },
-          ].map((s) => (
-            <a
-              key={s.label}
-              href={s.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="social-btn"
-              title={s.label}
-              style={{ fontSize: 16 }}
-            >
-              {s.icon}
-            </a>
-          ))}
-        </div>
-
-        {/* Copyright */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "center" }}>
-          <p style={{ color: "#464555", fontSize: 13, fontFamily: "'JetBrains Mono', monospace" }}>
-            Built with ❤️ using Next.js, TypeScript &amp; Lumina Noir Design System
-          </p>
-          <p style={{ color: "#464555", fontSize: 13, fontFamily: "'JetBrains Mono', monospace" }}>
-            © {year} Durga Praveen. All rights reserved.
-          </p>
-        </div>
-
-        {/* Back to top */}
-        <a
-          href="#home"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-            padding: "8px 20px",
-            background: "rgba(108,99,255,0.1)",
-            border: "1px solid rgba(108,99,255,0.25)",
-            borderRadius: 9999,
-            color: "#c4c0ff",
-            textDecoration: "none",
-            fontSize: 13,
-            fontFamily: "'JetBrains Mono', monospace",
-            transition: "all 0.3s ease",
-          }}
-          onMouseEnter={(e) => {
-            (e.currentTarget as HTMLAnchorElement).style.background = "rgba(108,99,255,0.2)";
-            (e.currentTarget as HTMLAnchorElement).style.boxShadow = "0 0 20px rgba(108,99,255,0.3)";
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLAnchorElement).style.background = "rgba(108,99,255,0.1)";
-            (e.currentTarget as HTMLAnchorElement).style.boxShadow = "none";
-          }}
-        >
-          ↑ Back to top
-        </a>
+    <footer className="w-full max-w-7xl mx-auto px-6 md:px-12 lg:px-24 py-12 flex flex-col md:flex-row items-center justify-between gap-6 border-t border-white/5 text-zinc-500 font-medium">
+      <div className="flex flex-col md:flex-row items-center gap-2 md:gap-4 text-sm text-center md:text-left">
+        <span>&copy; {year} {personalInfo.name}. All rights reserved.</span>
+        <span className="hidden md:inline">&middot;</span>
+        <span>Built with React & Next.js</span>
       </div>
+
+      <button
+        onClick={scrollToTop}
+        className="group flex items-center gap-2 hover:text-white transition-colors"
+      >
+        <span className="text-sm">Back to top</span>
+        <div className="w-8 h-8 rounded-full bg-white/[0.03] border border-white/5 flex items-center justify-center group-hover:bg-white/[0.08] group-hover:border-white/10 transition-colors">
+          <ArrowUp size={14} />
+        </div>
+      </button>
     </footer>
   );
 }

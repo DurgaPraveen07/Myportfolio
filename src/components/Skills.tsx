@@ -1,211 +1,83 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { skills } from "@/data/portfolio";
+import { techStack } from "@/data/portfolio";
+import { motion } from "framer-motion";
+
+// Colorful icon backgrounds for each tech — vibrant brand-accurate colors
+const techColors: Record<string, { bg: string; glow: string }> = {
+  "React":      { bg: "rgba(97,218,251,0.15)",   glow: "0 0 20px rgba(97,218,251,0.4)" },
+  "Next.js":    { bg: "rgba(255,255,255,0.1)",    glow: "0 0 20px rgba(255,255,255,0.3)" },
+  "TypeScript": { bg: "rgba(49,120,198,0.2)",     glow: "0 0 20px rgba(49,120,198,0.5)" },
+  "Node.js":    { bg: "rgba(104,160,99,0.2)",     glow: "0 0 20px rgba(104,160,99,0.5)" },
+  "Python":     { bg: "rgba(255,212,59,0.15)",    glow: "0 0 20px rgba(255,212,59,0.4)" },
+  "MongoDB":    { bg: "rgba(71,162,72,0.2)",      glow: "0 0 20px rgba(71,162,72,0.5)" },
+  "Supabase":   { bg: "rgba(62,207,142,0.15)",    glow: "0 0 20px rgba(62,207,142,0.4)" },
+  "MQTT":       { bg: "rgba(108,99,255,0.2)",     glow: "0 0 20px rgba(108,99,255,0.5)" },
+  "Docker":     { bg: "rgba(0,150,215,0.2)",      glow: "0 0 20px rgba(0,150,215,0.5)" },
+  "Git":        { bg: "rgba(240,80,50,0.2)",      glow: "0 0 20px rgba(240,80,50,0.4)" },
+  "ESP32":      { bg: "rgba(255,100,0,0.15)",     glow: "0 0 20px rgba(255,100,0,0.4)" },
+  "MediaPipe":  { bg: "rgba(255,170,0,0.15)",     glow: "0 0 20px rgba(255,170,0,0.4)" },
+};
 
 export default function Skills() {
-  const [visible, setVisible] = useState(false);
-  const [animated, setAnimated] = useState(false);
-  const ref = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisible(true);
-          setTimeout(() => setAnimated(true), 300);
-        }
-      },
-      { threshold: 0.1 }
-    );
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-
   return (
-    <section
-      ref={ref}
-      id="skills"
-      className="section"
-      style={{ background: "rgba(255,255,255,0.01)", position: "relative" }}
-    >
-      <div
-        className="blob"
-        style={{
-          width: 350,
-          height: 350,
-          background: "rgba(108,99,255,0.07)",
-          bottom: 0,
-          left: "-80px",
-        }}
-      />
+    <section id="skills" className="w-full py-40 md:py-56 bg-black overflow-hidden relative">
 
-      <div className="container">
-        {/* Header */}
-        <div
-          style={{
-            textAlign: "center",
-            marginBottom: 80,
-            opacity: visible ? 1 : 0,
-            transform: visible ? "translateY(0)" : "translateY(30px)",
-            transition: "all 0.7s ease",
-          }}
+      {/* Background Glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] bg-gradient-to-br from-blue-900/10 via-purple-900/10 to-transparent blur-[150px] rounded-full pointer-events-none" />
+
+      <div className="flex flex-col gap-20 max-w-6xl mx-auto px-6 relative z-10">
+
+        {/* Section Header */}
+        <motion.div
+          initial={{ opacity: 0, filter: "blur(10px)" }}
+          whileInView={{ opacity: 1, filter: "blur(0px)" }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 1.2 }}
+          className="flex flex-col gap-5 items-center text-center"
         >
-          <div className="section-label" style={{ justifyContent: "center" }}>
-            What I work with
-          </div>
-          <h2 className="section-title">
-            Skills &amp; <span className="gradient-text">Technologies</span>
-          </h2>
-          <p className="section-desc" style={{ margin: "0 auto" }}>
-            A curated set of tools and technologies I use to bring ideas to life
+          <h2 className="text-sm font-bold tracking-[0.3em] text-zinc-500 uppercase">Expertise</h2>
+          <p className="text-5xl md:text-7xl font-semibold tracking-tighter text-white leading-[1.1]">
+            Tools of the{" "}
+            <span className="text-zinc-600 italic font-light">trade.</span>
           </p>
-        </div>
+          <p className="text-zinc-500 text-lg font-light max-w-xl">
+            The technologies I use every day to build exceptional products.
+          </p>
+        </motion.div>
 
-        {/* Skills grid */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(2, 1fr)",
-            gap: 24,
-          }}
-          className="skills-grid"
-        >
-          {skills.map((group, gi) => (
-            <div
-              key={group.category}
-              className="glass-card"
-              style={{
-                padding: 32,
-                opacity: visible ? 1 : 0,
-                transform: visible ? "translateY(0)" : "translateY(40px)",
-                transition: `all 0.7s ease ${gi * 0.1}s`,
-              }}
-            >
-              {/* Category header */}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                  marginBottom: 28,
-                }}
+        {/* Colorful Skills Grid */}
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-8 md:gap-10">
+          {techStack.map((tech, i) => {
+            const colors = techColors[tech.name] || { bg: "rgba(255,255,255,0.08)", glow: "0 0 15px rgba(255,255,255,0.2)" };
+            return (
+              <motion.div
+                key={tech.name}
+                initial={{ opacity: 0, y: 25, filter: "blur(8px)" }}
+                whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                viewport={{ once: true, margin: "-40px" }}
+                transition={{ duration: 0.9, delay: i * 0.06, ease: [0.16, 1, 0.3, 1] }}
+                whileHover={{ y: -8, scale: 1.08 }}
+                className="group flex flex-col items-center justify-center gap-4 cursor-default"
               >
-                <div
-                  style={{
-                    width: 4,
-                    height: 28,
-                    borderRadius: 2,
-                    background: group.color,
-                    boxShadow: `0 0 12px ${group.color}80`,
-                  }}
-                />
-                <h3
-                  style={{
-                    fontSize: 16,
-                    fontWeight: 700,
-                    color: group.color,
-                    fontFamily: "'JetBrains Mono', monospace",
-                    letterSpacing: "0.05em",
-                  }}
+                {/* Icon bubble — colorful */}
+                <motion.div
+                  className="w-16 h-16 md:w-18 md:h-18 rounded-2xl flex items-center justify-center text-3xl md:text-4xl transition-all duration-500"
+                  style={{ background: colors.bg }}
+                  whileHover={{ boxShadow: colors.glow }}
                 >
-                  {group.category}
-                </h3>
-              </div>
+                  {tech.icon}
+                </motion.div>
 
-              {/* Skill bars */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-                {group.items.map((skill) => (
-                  <div key={skill.name}>
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        marginBottom: 8,
-                      }}
-                    >
-                      <span style={{ fontSize: 14, fontWeight: 500, color: "#c7c4d8" }}>
-                        {skill.name}
-                      </span>
-                      <span
-                        style={{
-                          fontSize: 12,
-                          fontFamily: "'JetBrains Mono', monospace",
-                          color: group.color,
-                          fontWeight: 600,
-                        }}
-                      >
-                        {skill.level}%
-                      </span>
-                    </div>
-                    <div className="progress-bar">
-                      <div
-                        className="progress-fill"
-                        style={{
-                          width: animated ? `${skill.level}%` : "0%",
-                          background: `linear-gradient(90deg, ${group.color}, ${group.color}aa)`,
-                          transitionDelay: `${gi * 0.1 + 0.3}s`,
-                        }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Extra tools row */}
-        <div
-          style={{
-            marginTop: 40,
-            padding: "32px 40px",
-            background: "rgba(255,255,255,0.02)",
-            border: "1px solid rgba(255,255,255,0.06)",
-            borderRadius: 20,
-            opacity: visible ? 1 : 0,
-            transition: "all 0.7s ease 0.4s",
-          }}
-        >
-          <p
-            style={{
-              fontFamily: "'JetBrains Mono', monospace",
-              fontSize: 12,
-              color: "#6C63FF",
-              marginBottom: 20,
-              letterSpacing: "0.12em",
-            }}
-          >
-            // TOOLS & PLATFORMS
-          </p>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
-            {[
-              "Git & GitHub",
-              "VS Code",
-              "Docker",
-              "Postman",
-              "Linux",
-              "Figma",
-              "Vercel",
-              "Netlify",
-              "Supabase",
-              "Firebase",
-              "Arduino IDE",
-              "Mosquitto MQTT",
-            ].map((tool) => (
-              <span key={tool} className="chip chip-cyan">
-                {tool}
-              </span>
-            ))}
-          </div>
+                {/* Name */}
+                <span className="text-[11px] font-mono font-semibold tracking-wider text-zinc-500 group-hover:text-zinc-200 transition-colors duration-400 text-center leading-tight">
+                  {tech.name}
+                </span>
+              </motion.div>
+            );
+          })}
         </div>
       </div>
-
-      <style>{`
-        @media (max-width: 768px) {
-          .skills-grid { grid-template-columns: 1fr !important; }
-        }
-      `}</style>
     </section>
   );
 }

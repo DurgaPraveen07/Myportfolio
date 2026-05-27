@@ -1,283 +1,70 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import { experience } from "@/data/portfolio";
+import { motion } from "framer-motion";
 
 export default function Experience() {
-  const [visible, setVisible] = useState(false);
-  const ref = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) setVisible(true); },
-      { threshold: 0.1 }
-    );
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-
   return (
-    <section
-      ref={ref}
-      id="experience"
-      className="section"
-      style={{ background: "rgba(255,255,255,0.01)", position: "relative" }}
-    >
-      <div
-        className="blob"
-        style={{
-          width: 400,
-          height: 400,
-          background: "rgba(0,212,255,0.06)",
-          top: "20%",
-          right: "-80px",
-        }}
-      />
-
-      <div className="container">
-        {/* Header */}
-        <div
-          style={{
-            textAlign: "center",
-            marginBottom: 80,
-            opacity: visible ? 1 : 0,
-            transform: visible ? "translateY(0)" : "translateY(30px)",
-            transition: "all 0.7s ease",
-          }}
+    <section id="experience" className="w-full py-48 md:py-64 bg-black">
+      <div className="flex flex-col gap-24 md:gap-32 max-w-5xl mx-auto px-6">
+        
+        {/* Section Header */}
+        <motion.div
+          initial={{ opacity: 0, filter: "blur(10px)" }}
+          whileInView={{ opacity: 1, filter: "blur(0px)" }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 1.2 }}
+          className="flex flex-col gap-6 items-center text-center max-w-3xl mx-auto"
         >
-          <div className="section-label" style={{ justifyContent: "center" }}>
-            My journey
-          </div>
-          <h2 className="section-title">
-            Experience &amp;{" "}
-            <span className="gradient-text">Education</span>
-          </h2>
-          <p className="section-desc" style={{ margin: "0 auto" }}>
-            My professional evolution and academic background
+          <h2 className="text-sm font-semibold tracking-[0.3em] text-zinc-500 uppercase">Experience</h2>
+          <p className="text-5xl md:text-7xl font-semibold tracking-tighter text-white leading-tight">
+            The path of <span className="text-zinc-600 italic font-light">progression.</span>
           </p>
-        </div>
+        </motion.div>
 
-        {/* Two columns: Work & Education */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 60,
-          }}
-          className="exp-grid"
-        >
-          {/* Work */}
-          <div>
-            <h3
-              style={{
-                fontFamily: "'JetBrains Mono', monospace",
-                fontSize: 13,
-                color: "#6C63FF",
-                letterSpacing: "0.1em",
-                marginBottom: 32,
-              }}
-            >
-              // WORK EXPERIENCE
-            </h3>
-            <Timeline
-              items={experience.filter((e) => e.type === "work")}
-              visible={visible}
-              color="var(--primary)"
-            />
-          </div>
+        {/* Minimalist Timeline */}
+        <div className="flex flex-col w-full relative">
+          
+          {/* Subtle Center Line for Desktop */}
+          <div className="hidden md:block absolute left-[30%] top-0 bottom-0 w-[1px] bg-gradient-to-b from-transparent via-white/10 to-transparent" />
 
-          {/* Education */}
-          <div>
-            <h3
-              style={{
-                fontFamily: "'JetBrains Mono', monospace",
-                fontSize: 13,
-                color: "#00D4FF",
-                letterSpacing: "0.1em",
-                marginBottom: 32,
-              }}
+          {experience.map((exp, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
+              whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 1.2, delay: i * 0.1, ease: [0.16, 1, 0.3, 1] }}
+              className="relative flex flex-col md:flex-row md:items-start gap-8 md:gap-16 pb-24 last:pb-0 group"
             >
-              // EDUCATION
-            </h3>
-            <Timeline
-              items={experience.filter((e) => e.type === "education")}
-              visible={visible}
-              color="var(--secondary)"
-              delay={0.2}
-            />
-          </div>
+              
+              {/* Left Column: Period & Company */}
+              <div className="md:w-[30%] flex flex-col gap-2 md:text-right md:pr-8 md:pt-1 z-10">
+                <span className="text-sm font-mono text-zinc-500 tracking-wider uppercase">{exp.period}</span>
+                <h4 className="text-xl font-semibold text-white tracking-tight group-hover:text-zinc-300 transition-colors duration-500">{exp.company}</h4>
+              </div>
+
+              {/* Right Column: Role & Details */}
+              <div className="md:w-[70%] flex flex-col gap-6 z-10 md:pl-8 relative">
+                {/* Timeline Node */}
+                <div className="hidden md:block absolute left-0 top-3 w-1.5 h-1.5 -translate-x-1/2 rounded-full bg-zinc-800 border border-zinc-600 group-hover:bg-white transition-colors duration-500 shadow-[0_0_10px_rgba(255,255,255,0)] group-hover:shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
+                
+                <h3 className="text-3xl md:text-4xl font-semibold text-zinc-200 tracking-tight">{exp.title}</h3>
+                <p className="text-zinc-400 font-light leading-relaxed text-lg max-w-2xl">
+                  {exp.description}
+                </p>
+                <div className="flex flex-wrap gap-2 pt-2">
+                  {exp.tech.map((t) => (
+                    <span key={t} className="px-4 py-2 rounded-full bg-white/[0.02] border border-white/5 text-xs font-medium text-zinc-400">
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          ))}
         </div>
       </div>
-
-      <style>{`
-        @media (max-width: 768px) {
-          .exp-grid { grid-template-columns: 1fr !important; gap: 48px !important; }
-        }
-      `}</style>
     </section>
-  );
-}
-
-interface TimelineProps {
-  items: typeof experience;
-  visible: boolean;
-  color: string;
-  delay?: number;
-}
-
-function Timeline({ items, visible, color, delay = 0 }: TimelineProps) {
-  return (
-    <div style={{ position: "relative" }}>
-      {/* Vertical line */}
-      <div
-        style={{
-          position: "absolute",
-          left: 20,
-          top: 6,
-          bottom: 0,
-          width: 2,
-          background: `linear-gradient(to bottom, ${color === "var(--primary)" ? "#6C63FF" : "#00D4FF"}, transparent)`,
-          opacity: 0.4,
-        }}
-      />
-
-      <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
-        {items.map((item, i) => (
-          <div
-            key={item.title}
-            style={{
-              display: "flex",
-              gap: 20,
-              opacity: visible ? 1 : 0,
-              transform: visible ? "translateY(0)" : "translateY(30px)",
-              transition: `all 0.7s ease ${delay + i * 0.15}s`,
-            }}
-          >
-            {/* Dot */}
-            <div style={{ flexShrink: 0, paddingTop: 4 }}>
-              <div
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: "50%",
-                  background:
-                    color === "var(--primary)"
-                      ? "rgba(108,99,255,0.15)"
-                      : "rgba(0,212,255,0.15)",
-                  border: `2px solid ${color === "var(--primary)" ? "rgba(108,99,255,0.5)" : "rgba(0,212,255,0.5)"}`,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 16,
-                  boxShadow:
-                    color === "var(--primary)"
-                      ? "0 0 16px rgba(108,99,255,0.3)"
-                      : "0 0 16px rgba(0,212,255,0.3)",
-                }}
-              >
-                {item.type === "work" ? "💼" : "🎓"}
-              </div>
-            </div>
-
-            {/* Card */}
-            <div
-              style={{
-                flex: 1,
-                padding: "24px",
-                background: "rgba(255,255,255,0.02)",
-                border: "1px solid rgba(255,255,255,0.07)",
-                borderRadius: 16,
-                transition: "all 0.3s ease",
-                cursor: "default",
-              }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLDivElement).style.borderColor =
-                  color === "var(--primary)"
-                    ? "rgba(108,99,255,0.35)"
-                    : "rgba(0,212,255,0.35)";
-                (e.currentTarget as HTMLDivElement).style.background =
-                  color === "var(--primary)"
-                    ? "rgba(108,99,255,0.05)"
-                    : "rgba(0,212,255,0.05)";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLDivElement).style.borderColor =
-                  "rgba(255,255,255,0.07)";
-                (e.currentTarget as HTMLDivElement).style.background =
-                  "rgba(255,255,255,0.02)";
-              }}
-            >
-              {/* Period badge */}
-              <div
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  padding: "3px 10px",
-                  background:
-                    color === "var(--primary)"
-                      ? "rgba(108,99,255,0.12)"
-                      : "rgba(0,212,255,0.1)",
-                  border: `1px solid ${color === "var(--primary)" ? "rgba(108,99,255,0.25)" : "rgba(0,212,255,0.25)"}`,
-                  borderRadius: 9999,
-                  fontSize: 11,
-                  fontFamily: "'JetBrains Mono', monospace",
-                  color:
-                    color === "var(--primary)" ? "#c4c0ff" : "#33DCFF",
-                  marginBottom: 10,
-                }}
-              >
-                📅 {item.period}
-                {item.current && (
-                  <span
-                    style={{
-                      marginLeft: 8,
-                      width: 6,
-                      height: 6,
-                      borderRadius: "50%",
-                      background: "#22c55e",
-                      display: "inline-block",
-                      animation: "pulse-dot 2s infinite",
-                    }}
-                  />
-                )}
-              </div>
-
-              <h4 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>
-                {item.title}
-              </h4>
-              <p
-                style={{
-                  fontSize: 13,
-                  fontFamily: "'JetBrains Mono', monospace",
-                  color:
-                    color === "var(--primary)" ? "#c4c0ff" : "#33DCFF",
-                  marginBottom: 12,
-                }}
-              >
-                {item.company}
-              </p>
-              <p style={{ fontSize: 13, color: "#918fa1", lineHeight: 1.7, marginBottom: 16 }}>
-                {item.description}
-              </p>
-
-              {/* Tech chips */}
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                {item.tech.map((t) => (
-                  <span
-                    key={t}
-                    className={
-                      color === "var(--primary)" ? "chip" : "chip chip-cyan"
-                    }
-                    style={{ fontSize: 11 }}
-                  >
-                    {t}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
   );
 }
